@@ -1,0 +1,81 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ""
+      POSTGRES_DB: keciltoko
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: tokokecil
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  product-service:
+    build: ./tokokecil
+    container_name: product-service
+    depends_on:
+      - postgres
+    environment:
+      DB_USER: postgres
+      DB_PASS: ""
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: keciltoko
+      JWT_SECRET: mysecretkey123
+      # Connection Pooling ENV for PostgreSQL
+      DB_MAX_OPEN_CONNS: 20
+      DB_MAX_IDLE_CONNS: 10
+      DB_CONN_MAX_LIFETIME: 60
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  auth-service:
+    build: ./tokokecil-ddd/auth-service
+    container_name: auth-service
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: mongodb://mongodb:27017
+      MONGO_DB: tokokecil
+      JWT_SECRET: mysecretkey123
+      PORT: 8081
+      # Connection Pooling ENV for MongoDB
+      MONGO_POOL_MIN: 5
+      MONGO_POOL_MAX: 50
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway-service
+    depends_on:
+      - product-service
+      - auth-service
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8081
+      PRODUCT_SERVICE_URL: http://product-service:8080
+      JWT_SECRET: mysecretkey123
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  mongo_data:
