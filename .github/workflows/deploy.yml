@@ -10,7 +10,7 @@ jobs:
 
     env:
       PROJECT_ID: third-project-467207
-      # REGISTRY: asia-southeast2-docker.pkg.dev/third-project-467207/docker-asia-v2
+      REGISTRY: asia-southeast2-docker.pkg.dev/rising-reserve-467312-q8/docker-asia-v2
       VM_HOST: ${{ secrets.VM_HOST }}
       VM_USER: ${{ secrets.VM_USER }}
       VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
